@@ -2,7 +2,7 @@
 // code of the codelab.
 // You don't need to modify anything in this file.
 
-package shotcontent
+package shotstore
 
 import (
 	"bytes"

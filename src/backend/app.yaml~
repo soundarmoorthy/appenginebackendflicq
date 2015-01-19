@@ -1,0 +1,8 @@
+application:shotstore
+version:one 
+runtime:go
+api_version:1.0
+
+handlers:
+- url:/api/.*
+  script:_go_app

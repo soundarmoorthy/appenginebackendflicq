@@ -1,4 +1,4 @@
-application: shotcontent
+application: shotstore
 version: one 
 runtime: go
 api_version: 1.0
