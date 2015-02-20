@@ -15,11 +15,12 @@ import (
 const dataKind = "Shot"
 
 type Shot struct {
-	ID    string `datastore:""`
-	Foo   string
-	Bar   string
-	Duck  string
-	Goose string
+	ID      string `datastore:""`
+	Counter string
+	Foo     string
+	Bar     string
+	Duck    string
+	Goose   string
 }
 
 func init() {
@@ -50,10 +51,11 @@ func getshot(w io.Writer, r *http.Request) error {
 func create(w io.Writer, r *http.Request) error {
 	c := appengine.NewContext(r)
 	shot := Shot{
-		Foo:   "1.0",
-		Bar:   "1.0",
-		Duck:  "1.0",
-		Goose: "1.0",
+		Counter: "1",
+		Foo:     "1.0",
+		Bar:     "1.0",
+		Duck:    "1.0",
+		Goose:   "1.0",
 	}
 
 	key := datastore.NewIncompleteKey(c, dataKind, nil)
