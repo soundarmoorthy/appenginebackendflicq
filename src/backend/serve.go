@@ -14,7 +14,7 @@ type Shot struct {
 	Counter string         `json:"counter" datastore:",noindex" endpoints:"List"`
 	Foo     string         `json:"k"`
 	Bar     string         `json:"x"`
-	Duck    string         `json:y"`
+	Duck    string         `json:"y"`
 	Goose   string         `json:"z"`
 }
 
