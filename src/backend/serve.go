@@ -11,12 +11,11 @@ const dataKind = "Shot"
 
 type Shot struct {
 	ID      *datastore.Key `json:"id" datastore:"-"`
-	Counter string         `json:"counter" datastore:",noindex" endpoints:"get"`
-
-	Foo   string `json:"k"`
-	Bar   string `json:"x"`
-	Duck  string `json:y"`
-	Goose string `json:"z"`
+	Counter string         `json:"counter" datastore:",noindex" endpoints:"List"`
+	Foo     string         `json:"k"`
+	Bar     string         `json:"x"`
+	Duck    string         `json:y"`
+	Goose   string         `json:"z"`
 }
 
 type Shots struct {
@@ -47,8 +46,9 @@ func init() {
 		info.Name, info.HTTPMethod, info.Path, info.Desc = name, httpMethod, path, desc
 	}
 
-	register("Add", "ShotService.Add", "PUT", "Shots", "Add a shot")
-	register("List", "ShotService.List", "GET", "Shots", "List all the shots")
+	register("Add", "ShotService.Add", "PUT", "shots", "Add a shot")
+	register("List", "ShotService.List", "GET", "shots", "List all the shots")
+	register("Create", "ShotService.Create", "POST", "shots", "Create a shot info with random data")
 	endpoints.HandleHTTP()
 }
 
@@ -75,5 +75,19 @@ func (service *FlicqEndpointService) Add(c endpoints.Context, shot *Shot) error 
 
 	key := datastore.NewIncompleteKey(c, dataKind, nil)
 	_, err := datastore.Put(c, key, shot)
+	return err
+}
+
+func (service *FlicqEndpointService) Create(c endpoints.Context) error {
+	shot := Shot{
+		Counter: "1",
+		Foo:     "1",
+		Bar:     "2",
+		Duck:    "3",
+		Goose:   "4",
+	}
+
+	key := datastore.NewIncompleteKey(c, dataKind, nil)
+	_, err := datastore.Put(c, key, &shot)
 	return err
 }
