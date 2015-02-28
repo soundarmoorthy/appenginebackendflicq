@@ -1,9 +1,13 @@
 application: flicq-gaints-4711
-version: 1 
+version: v1
+threadsafe: true
+
 runtime: go
 api_version: go1
-module: default
 
 handlers:
-- url: /api/.*
+- url: /.*
+  script: _go_app
+
+- url: /_ah/spi/.*
   script: _go_app

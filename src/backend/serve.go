@@ -1,90 +1,79 @@
 package flicq
 
 import (
-	"encoding/json"
-	"fmt"
-	"io"
-	"net/http"
-
-	"github.com/gorilla/mux"
-
-	"appengine"
 	"appengine/datastore"
+	"log"
 )
+
+import "github.com/GoogleCloudPlatform/go-endpoints/endpoints"
 
 const dataKind = "Shot"
 
 type Shot struct {
-	ID      string `datastore:""`
-	Counter string
-	Foo     string
-	Bar     string
-	Duck    string
-	Goose   string
+	ID      *datastore.Key `json:"id" datastore:"-"`
+	Counter string         `json:"counter" datastore:",noindex" endpoints:"get"`
+
+	Foo   string `json:"k"`
+	Bar   string `json:"x"`
+	Duck  string `json:y"`
+	Goose string `json:"z"`
+}
+
+type Shots struct {
+	Items []*Shot `json:"items"`
+}
+
+type FlicqRequest struct {
+	Limit int `json:"limit" endpoints:"d=10"`
+}
+
+type FlicqEndpointService struct {
 }
 
 func init() {
-	r := mux.NewRouter().PathPrefix("/api/").Subrouter()
 
-	r.Handle("/add", appHandler(addshot)).Methods("POST")
-	r.Handle("/get", appHandler(getshot)).Methods("GET")
-	//This create REST API is just to test if the data inserts properly.
-	r.Handle("/create", appHandler(create)).Methods("POST")
-	http.Handle("/api/", r)
-}
-
-func getshot(w io.Writer, r *http.Request) error {
-	c := appengine.NewContext(r)
-
-	shots := []Shot{}
-	keys, err := datastore.NewQuery(dataKind).GetAll(c, &shots)
+	service := &FlicqEndpointService{}
+	api, err := endpoints.RegisterService(service, "flicq", "v1", "Flicq API", true)
 	if err != nil {
-		return appErrorf(http.StatusBadRequest, "get all content failed", err)
+		log.Fatalf("Register Service : %v", err)
 	}
 
-	for i, k := range keys {
-		shots[i].ID = k.Encode()
+	register := func(orig, name, httpMethod, path, desc string) {
+		method := api.MethodByName(orig)
+		if method == nil {
+			log.Fatalf("Missing method : %s", orig)
+		}
+		info := method.Info()
+		info.Name, info.HTTPMethod, info.Path, info.Desc = name, httpMethod, path, desc
 	}
-	return json.NewEncoder(w).Encode(&shots)
+
+	register("Add", "ShotService.Add", "PUT", "Shots", "Add a shot")
+	register("List", "ShotService.List", "GET", "Shots", "List all the shots")
+	endpoints.HandleHTTP()
 }
 
-func create(w io.Writer, r *http.Request) error {
-	c := appengine.NewContext(r)
-	shot := Shot{
-		Counter: "1",
-		Foo:     "1.0",
-		Bar:     "1.0",
-		Duck:    "1.0",
-		Goose:   "1.0",
+func (service *FlicqEndpointService) List(c endpoints.Context, r *FlicqRequest) (*Shots, error) {
+
+	if r.Limit <= 0 {
+		r.Limit = 10
 	}
+
+	q := datastore.NewQuery(dataKind).Limit(r.Limit)
+	shots := make([]*Shot, 0, r.Limit)
+	keys, err := q.GetAll(c, &shots)
+	if err != nil {
+		return nil, err
+	}
+	for i, id := range keys {
+		shots[i].ID = id
+	}
+
+	return &Shots{shots}, nil
+}
+
+func (service *FlicqEndpointService) Add(c endpoints.Context, shot *Shot) error {
 
 	key := datastore.NewIncompleteKey(c, dataKind, nil)
-	key, err := datastore.Put(c, key, &shot)
-	if err != nil {
-		return fmt.Errorf("create shot data: %v", err)
-	}
-
-	shot.ID = key.Encode()
-	return json.NewEncoder(w).Encode(&shot)
-}
-
-func addshot(w io.Writer, r *http.Request) error {
-	c := appengine.NewContext(r)
-
-	shot := Shot{}
-	err := json.NewDecoder(r.Body).Decode(&shot)
-	if err != nil {
-		return appErrorf(http.StatusBadRequest, "decode list: %v", err)
-	}
-
-	key := datastore.NewIncompleteKey(c, dataKind, nil)
-	key, err = datastore.Put(c, key, &shot)
-	if err != nil {
-		return fmt.Errorf("add shot data: %v", err)
-	}
-
-	shot.ID = key.Encode()
-	//We don't need to send the data back in latter days. This is just for
-	//informational purposes.
-	return json.NewEncoder(w).Encode(&shot)
+	_, err := datastore.Put(c, key, shot)
+	return err
 }
