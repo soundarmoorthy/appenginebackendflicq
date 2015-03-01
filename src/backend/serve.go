@@ -8,6 +8,7 @@ import (
 import "github.com/GoogleCloudPlatform/go-endpoints/endpoints"
 
 const dataKind = "Shot"
+const emailSubscriberKind = "Subscriber"
 
 type Shot struct {
 	ID      *datastore.Key `json:"id" datastore:"-"`
@@ -20,6 +21,15 @@ type Shot struct {
 
 type Shots struct {
 	Items []*Shot `json:"items"`
+}
+
+type Subscriber struct {
+	ID    *datastore.Key `json:"id" datastore:"-"`
+	Email string         `json:"email"`
+}
+
+type Subscribers struct {
+	Items []*Subscriber `json:"items"`
 }
 
 type FlicqRequest struct {
@@ -46,9 +56,11 @@ func init() {
 		info.Name, info.HTTPMethod, info.Path, info.Desc = name, httpMethod, path, desc
 	}
 
-	register("Add", "ShotService.Add", "PUT", "shots", "Add a shot")
-	register("List", "ShotService.List", "GET", "shots", "List all the shots")
-	register("Create", "ShotService.Create", "POST", "shots", "Create a shot info with random data")
+	register("Add", "FlicqEndpointService.Shots.Add", "PUT", "shots", "Add a shot")
+	register("List", "FlicqEndpointService.Shots.List", "GET", "shots", "List all the shots")
+	register("Create", "FlicqEndpointService.Shots.Create", "POST", "shots", "Create a shot info with random data")
+	register("Subscribe", "FlicqEndpointService.Subscriber.Subscribe", "PUT", "email", "Add a subscriber to our list")
+	register("ShowAll", "FlicqEndpointService.EmailSubscriber.ShowAll", "GET", "email", "Show subscribers")
 	endpoints.HandleHTTP()
 }
 
@@ -90,4 +102,29 @@ func (service *FlicqEndpointService) Create(c endpoints.Context) error {
 	key := datastore.NewIncompleteKey(c, dataKind, nil)
 	_, err := datastore.Put(c, key, &shot)
 	return err
+}
+
+func (service *FlicqEndpointService) Subscribe(c endpoints.Context, subscriber *Subscriber) error {
+	key := datastore.NewIncompleteKey(c, emailSubscriberKind, nil)
+	_, err := datastore.Put(c, key, subscriber)
+	return err
+}
+
+func (service *FlicqEndpointService) ShowAll(c endpoints.Context, r *FlicqRequest) (*Subscribers, error) {
+
+	if r.Limit <= 0 {
+		r.Limit = 1
+	}
+
+	q := datastore.NewQuery(emailSubscriberKind).Limit(r.Limit)
+	subscribers := make([]*Subscriber, 0, r.Limit)
+	keys, err := q.GetAll(c, &subscribers)
+	if err != nil {
+		return nil, err
+	}
+	for i, id := range keys {
+		subscribers[i].ID = id
+	}
+
+	return &Subscribers{subscribers}, nil
 }
