@@ -1,5 +1,5 @@
-application: flicq-thurst-4711
-version: v1
+application: united-creek-911
+version: v3
 threadsafe: true
 
 runtime: go

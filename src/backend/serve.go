@@ -8,28 +8,21 @@ import (
 import "github.com/GoogleCloudPlatform/go-endpoints/endpoints"
 
 const dataKind = "Shot"
-const emailSubscriberKind = "Subscriber"
 
 type Shot struct {
-	ID      *datastore.Key `json:"id" datastore:"-"`
-	Counter string         `json:"counter" datastore:",noindex" endpoints:"List"`
-	Foo     string         `json:"k"`
-	Bar     string         `json:"x"`
-	Duck    string         `json:"y"`
-	Goose   string         `json:"z"`
+	ID             *datastore.Key `json:"id" datastore:"-"`
+	Counter        string         `json:"counter" datastore:",noindex" endpoints:"List"`
+	Quaternion0    string         `json:"q0"`
+	Quaternion1    string         `json:"q1"`
+	Quaternion2    string         `json:"q2"`
+	Quaternion3    string         `json:"q3"`
+	AccelerometerX string         `json:"aX"`
+	AccelerometerY string         `json:"aY"`
+	AccelerometerZ string         `json:"aZ"`
 }
 
 type Shots struct {
 	Items []*Shot `json:"items"`
-}
-
-type Subscriber struct {
-	ID    *datastore.Key `json:"id" datastore:"-"`
-	Email string         `json:"email"`
-}
-
-type Subscribers struct {
-	Items []*Subscriber `json:"items"`
 }
 
 type FlicqRequest struct {
@@ -42,7 +35,7 @@ type FlicqEndpointService struct {
 func init() {
 
 	service := &FlicqEndpointService{}
-	api, err := endpoints.RegisterService(service, "flicq", "v1", "Flicq API", true)
+	api, err := endpoints.RegisterService(service, "flicq", "v3", "Flicq Backend Data managemenet API", true)
 	if err != nil {
 		log.Fatalf("Register Service : %v", err)
 	}
@@ -59,8 +52,6 @@ func init() {
 	register("Add", "FlicqEndpointService.Shots.Add", "PUT", "shots", "Add a shot")
 	register("List", "FlicqEndpointService.Shots.List", "GET", "shots", "List all the shots")
 	register("Create", "FlicqEndpointService.Shots.Create", "POST", "shots", "Create a shot info with random data")
-	register("Subscribe", "FlicqEndpointService.Subscriber.Subscribe", "PUT", "email", "Add a subscriber to our list")
-	register("ShowAll", "FlicqEndpointService.EmailSubscriber.ShowAll", "GET", "email", "Show subscribers")
 	endpoints.HandleHTTP()
 }
 
@@ -92,39 +83,16 @@ func (service *FlicqEndpointService) Add(c endpoints.Context, shot *Shot) error 
 
 func (service *FlicqEndpointService) Create(c endpoints.Context) error {
 	shot := Shot{
-		Counter: "1",
-		Foo:     "1",
-		Bar:     "2",
-		Duck:    "3",
-		Goose:   "4",
+		Quaternion0:    "0",
+		Quaternion1:    "1",
+		Quaternion2:    "2",
+		Quaternion3:    "3",
+		AccelerometerX: "4",
+		AccelerometerY: "5",
+		AccelerometerZ: "6",
 	}
 
 	key := datastore.NewIncompleteKey(c, dataKind, nil)
 	_, err := datastore.Put(c, key, &shot)
 	return err
-}
-
-func (service *FlicqEndpointService) Subscribe(c endpoints.Context, subscriber *Subscriber) error {
-	key := datastore.NewIncompleteKey(c, emailSubscriberKind, nil)
-	_, err := datastore.Put(c, key, subscriber)
-	return err
-}
-
-func (service *FlicqEndpointService) ShowAll(c endpoints.Context, r *FlicqRequest) (*Subscribers, error) {
-
-	if r.Limit <= 0 {
-		r.Limit = 1
-	}
-
-	q := datastore.NewQuery(emailSubscriberKind).Limit(r.Limit)
-	subscribers := make([]*Subscriber, 0, r.Limit)
-	keys, err := q.GetAll(c, &subscribers)
-	if err != nil {
-		return nil, err
-	}
-	for i, id := range keys {
-		subscribers[i].ID = id
-	}
-
-	return &Subscribers{subscribers}, nil
 }
