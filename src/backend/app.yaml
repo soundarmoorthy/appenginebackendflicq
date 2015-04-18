@@ -1,5 +1,5 @@
-application: united-creek-911
-version: v3
+application: united-creek-4711
+version: v1
 threadsafe: true
 
 runtime: go
