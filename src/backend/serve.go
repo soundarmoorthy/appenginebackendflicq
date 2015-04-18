@@ -35,7 +35,7 @@ type FlicqEndpointService struct {
 func init() {
 
 	service := &FlicqEndpointService{}
-	api, err := endpoints.RegisterService(service, "flicq", "v3", "Flicq Backend Data managemenet API", true)
+	api, err := endpoints.RegisterService(service, "flicq", "v1", "Flicq Backend Data managemenet API", true)
 	if err != nil {
 		log.Fatalf("Register Service : %v", err)
 	}
