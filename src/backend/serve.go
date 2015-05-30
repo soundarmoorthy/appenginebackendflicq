@@ -3,6 +3,7 @@ package flicq
 import (
 	"appengine/datastore"
 	"log"
+	"time"
 )
 
 import "github.com/GoogleCloudPlatform/go-endpoints/endpoints"
@@ -13,6 +14,7 @@ type Shot struct {
 	KEY   *datastore.Key `json:"key" datastore:"-"`
 	ID    string
 	Items []float32
+	Time  time.Time
 }
 
 type Shots struct {
